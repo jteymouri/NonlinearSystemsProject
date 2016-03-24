@@ -25,7 +25,7 @@
 %Block 1: Variable Initialization and Settings
 clear;
 RandStart = 0; %Determine is random start or not
-N=6; %Number of agents to start (N robots)
+N=4; %Number of agents to start (N robots)
 dt=0.01; % numerical steplength
 t=0; %Start time
 Tf=50; %Final time
@@ -36,10 +36,12 @@ Alpha = 0;
 BlockSize = 0.05;
 AxisLength=10; % Total Length of Axis
 deltadisk = 0.3;
-di = .03; %d for archimedes sprial
+di_MAX = 0.06;
+di = .01; %d for archimedes sprial
 RadiusShadow = .08; %Length of Radius of area coverage ball [used in Showgraph()]
 Consensus = 1; %Do you want consensus to center first?
-
+trajectoriesx = zeros(N,Tf/dt);
+trajectoriesy = zeros(N,Tf/dt);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -113,12 +115,10 @@ while Consensus == 1;
         
         plot(X(1,:),X(2,:),'o')
         axis([0,AxisLength,0,AxisLength]);
-        drawnow;
+%         drawnow;
         if norm(X-repmat([AxisLength/2;AxisLength/2],1,N+1))<BlockSize
             Consensus = 0;
         end
-        %Update Time here? - Depends what you want to restrict the total
-        %time of
 end
 X(:,N+1) = [];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,19 +179,27 @@ while (t<Tf)&&(Consensus==0);
     %% For All Agents, Update Position
     for i=1:N;
         X(:,i)=X(:,i)+dt.*DX(:,i);
+        trajectoriesx(i,iter)=X(1,i);
+        trajectoriesy(i,iter)=X(2,i);
     end;
     
     t=t+dt; %% Update time
     
     %% Plot the solution every X iterations. Skips some iterations for speed
-    if (mod(iter,100)==0)
-        show_graph(X,N,AxisLength,t,RadiusShadow); %plot graph
-        pcolor(X1,Y1,TrackingColors);  %replot Z map with updates
-    end;
+%     if (mod(iter,100)==0)
+%         show_graph(X,N,AxisLength,t,RadiusShadow); %plot graph
+%         pcolor(X1,Y1,TrackingColors);  %replot Z map with updates
+%     end;
     
    
     iter=iter+1; %counter of # of iterations of loop
     
 end;
+
+figure(1);
+hold on
+for i=1:N
+    plot(trajectoriesx(i,:),trajectoriesy(i,:));
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %END of File
