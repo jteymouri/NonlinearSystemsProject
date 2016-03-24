@@ -25,18 +25,18 @@
 %Block 1: Variable Initialization and Settings
 clear;
 RandStart = 0; %Determine is random start or not
-N=3; %Number of agents to start (N robots)
-dt=0.03; % numerical steplength
+N=6; %Number of agents to start (N robots)
+dt=0.01; % numerical steplength
 t=0; %Start time
-Tf=17; %Final time
+Tf=50; %Final time
 iter=1; %Iteration counter
 DX=zeros(2,N);  %PreAllocation: Here is where we store the derivatives
 X = zeros(2,N); %PreAllocation: Here is where we store the positions
 Alpha = 0;
-BlockSize = 0.1;
-AxisLength=6; % Total Length of Axis
+BlockSize = 0.05;
+AxisLength=10; % Total Length of Axis
 deltadisk = 0.3;
-di = .01; %d for archimedes sprial
+di = .03; %d for archimedes sprial
 RadiusShadow = .08; %Length of Radius of area coverage ball [used in Showgraph()]
 Consensus = 1; %Do you want consensus to center first?
 
@@ -46,20 +46,21 @@ Consensus = 1; %Do you want consensus to center first?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Block 2: The Following Creates the meshgrid for the plot
 hold on; %hold figure on for graphing
+x = 0:BlockSize:AxisLength;
 [X1,Y1] = meshgrid(0:BlockSize:AxisLength, 0:BlockSize:AxisLength); %Create Normal spaced vectors for axis
-PDF1 = normpdf(X1,AxisLength/2,AxisLength/4); %normal dis
-PDF2 = normpdf(Y1,AxisLength/2,AxisLength/4); %normal dis
-Z = PDF1.*PDF2; %z values
-Z = -1*(Z./max(max(Z)));
-% Z = zeros(size(X1));
-% for i=1:length(X1(1,:))
-%     for j=1:length(Y1(:,1))
-%         Z(i,j) = -1*gaussian(X1(1,i),Y1(j,1),AxisLength/2,AxisLength/2,sqrt(AxisLength/4),sqrt(AxisLength/4));
-%     end
-% end
+% PDF1 = normpdf(X1,AxisLength/2,AxisLength/4); %normal dis
+% PDF2 = normpdf(Y1,AxisLength/2,AxisLength/4); %normal dis
+% Z = PDF1.*PDF2; %z values
+% Z = -1*(Z./max(max(Z)));
+Z = zeros(size(X1));
+for i=1:length(X1(1,:))
+    for j=1:length(Y1(:,1))
+        Z(j,i) = -1*gaussian(X1(1,i),Y1(j,1),AxisLength/2,AxisLength/2,sqrt(AxisLength/4),sqrt(AxisLength/4));
+    end
+end
+%Z = Z./min(min(Z));
 
 TrackingColors = Z;
-%pcolor(X1,Y1,Z) %Pcolor Map that works
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -119,6 +120,7 @@ while Consensus == 1;
         %Update Time here? - Depends what you want to restrict the total
         %time of
 end
+X(:,N+1) = [];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -144,12 +146,12 @@ while (t<Tf)&&(Consensus==0);
          end
     end
     
-    di = di/(-1*Z(centeriy,centerix));
-    if di >= deltadisk
-        di = deltadisk;
-        break;
-        display('Max di reached');
-    end
+%     di = di/(-1*Z(centeriy,centerix));
+%     if di >= deltadisk
+%         di = deltadisk;
+%         break;
+%         display('Max di reached');
+%     end
     
     %% Update Rotation and Dx
     %Agents 1-(N-1): Rotation and Dx
@@ -163,8 +165,7 @@ while (t<Tf)&&(Consensus==0);
     for i=1:(N-1)
         Alpha = GetAlpha(N,di,i,X);
         R=rotation(N,t,Alpha);
-        DX(1,i)=R(1,:)*((X(:,i+1)-X(:,i)));
-        DX(2,i)=R(2,:)*((X(:,i+1)-X(:,i)));
+        DX(:,i)=R*((X(:,i+1)-X(:,i)));
     end;
     
     %Agent N: Rotation and Dx
@@ -172,8 +173,7 @@ while (t<Tf)&&(Consensus==0);
     
         Alpha = GetAlpha(N,di,N,X);
         R=rotation(N,t,Alpha);
-        DX(1,N)=R(1,:)*((X(:,1)-X(:,N))); %Dx
-        DX(2,N)=R(2,:)*((X(:,1)-X(:,N))); %Dy
+        DX(:,N)=R*((X(:,1)-X(:,N))); 
     
     
     %% For All Agents, Update Position
@@ -184,13 +184,12 @@ while (t<Tf)&&(Consensus==0);
     t=t+dt; %% Update time
     
     %% Plot the solution every X iterations. Skips some iterations for speed
-    if (mod(iter,1)==0)
+    if (mod(iter,100)==0)
         show_graph(X,N,AxisLength,t,RadiusShadow); %plot graph
+        pcolor(X1,Y1,TrackingColors);  %replot Z map with updates
     end;
     
-
-    
-    pcolor(X1,Y1,TrackingColors);  %replot Z map with updates
+   
     iter=iter+1; %counter of # of iterations of loop
     
 end;

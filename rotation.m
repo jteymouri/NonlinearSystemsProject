@@ -17,18 +17,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function R= rotation(N,t,Alpha)
-offset=0; %Not Needed. Makes agents go in or out of circle
-
-%Go toward consensus or what? Stay in place, go toward circle state
-if(t<.1)
-    R=[cos((pi+offset)/N) sin(((pi+offset)/N));-sin((pi+offset)/N) cos(((pi+offset)/N))];
-end
-
-%Archimeddes Spiral. Use for Archimedes Spiral of pattern
-if(t>=.1)
-
     R=[cos(Alpha) sin(Alpha);-sin(Alpha) cos(Alpha)];
-end
-
 
 end
