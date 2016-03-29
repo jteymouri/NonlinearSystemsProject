@@ -147,7 +147,7 @@ while (t<Tf)&&(Consensus==0);
     end
     
     if di < di_MAX && mod(iter,100)==0
-        di = di/normedZ(centeriy,centerix);
+        di = di+di*;
     elseif di > di_MAX
         di = di_MAX;
     end
