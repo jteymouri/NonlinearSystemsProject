@@ -19,20 +19,27 @@
 % Note 2: Each agent will have a different alpha value
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function[Alpha]=GetAlpha(N,d,i,X)
+function[Alpha]=GetAlpha(N,d,i,X,Consensus)
+if(Consensus==0)
+    if (i<N) %for N-1 Agents    
+        Points = [X(1,i+1),X(2,i+1);X(1,i),X(2,i)];
+    end
 
-if (i<N) %for N-1 Agents    
-    Points = [X(1,i+1),X(2,i+1);X(1,i),X(2,i)];
+    if (i==N) %for the Nth Agent
+        Points = [X(1,1),X(2,1);X(1,i),X(2,i)]; %back to N1
+    end
+
+    Zed = pdist(Points,'euclidean'); %Euclidean distance between all X,Y
+
+    %Archimedes Spiral
+    G = ((2*d)/Zed)*(sin(pi/N)/(pi/N));
+    Alpha = (pi/N) + atan(G); %solves for Alpha
+else
+    %executes getAlpha when running consensus
+    Points = [X(1,N+1),X(2,N+1);X(1,i),X(2,i)];
+    Zed = pdist(Points,'euclidean');
+    G = ((2*d)/Zed)*(sin(pi/N)/(pi/N));
+    Alpha = -(pi/N)+ atan(G);
 end
-
-if (i==N) %for the Nth Agent
-    Points = [X(1,1),X(2,1);X(1,i),X(2,i)]; %back to N1
-end
-
-Zed = pdist(Points,'euclidean'); %Euclidean distance between all X,Y
-
-%Archimedes Spiral
-G = ((2*d)/Zed)*(sin(pi/N)/(pi/N));
-Alpha = (pi/N) + atan(G); %solves for Alpha
 
 end

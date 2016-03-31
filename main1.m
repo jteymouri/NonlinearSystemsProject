@@ -24,7 +24,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Block 1: Variable Initialization and Settings
 clear;
-RandStart = 0; %Determine is random start or not
+RandStart = 1; %Determine is random start or not
 N=6; %Number of agents to start (N robots)
 dt=0.01; % numerical steplength
 t=0; %Start time
@@ -84,6 +84,19 @@ if RandStart == 0
        X(2,j) = Center(2)+RadiusSpread*cos(-Theta*j);
    end
 end
+%----------------------------new code--------------------------------------
+%using the non-random initial positions above as the target formation given
+%that the actual starting positions are random
+%goal is to have agents spiral and converge to this initial formation
+Theta = 2*pi/N;
+Center=[AxisLength/2 AxisLength/2];
+start=zeros(2,N);           %initialize starting formation matrix
+for j = 1:N
+    start(1,j) = Center(1)+RadiusSpread*sin(-Theta*j);
+    start(2,j) = Center(2)+RadiusSpread*cos(-Theta*j);
+end
+
+%--------------------------end of new code---------------------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -94,18 +107,45 @@ while Consensus == 1;
         %Create virtual node at Center Position
         X(:,N+1) = [AxisLength/2; AxisLength/2]; %Center Position
 
-        for i = 1:N
-            for j = 1:N+1
-                if (i~=j)
-                    
-                    if (j == N+1)
-                        DX(:,i) =DX(:,i)-((X(:,i)-X(:,j))*(norm(X(:,i)-X(:,j))-0.01)); %What is 0.03?
-                    else
-                        DX(:,i) =DX(:,i)-((X(:,i)-X(:,j))*(norm(X(:,i)-X(:,j))-0.01)); %What is 0.07?
-                    end
-                end
+%         for i = 1:N
+%             for j = 1:N+1
+%                 if (i~=j)
+%                     
+%                     if (j == N+1)
+%                         DX(:,i) =DX(:,i)-((X(:,i)-X(:,j))*(norm(X(:,i)-X(:,j))-0.01)); %What is 0.03?
+%                     else
+%                         DX(:,i) =DX(:,i)-((X(:,i)-X(:,j))*(norm(X(:,i)-X(:,j))-0.01)); %What is 0.07?
+%                     end
+%                 end
+%             end
+%         end
+%--------------------new code----------------------------------------------
+reldistance=zeros(2,N+1);         %initialize relative distance matrix
+relmag=zeros(1,N+1);              %magnitude of relative distance
+mindistance=.2;                   %minimum distance needed to avoid collision
+for i=1:N
+    collision=0;                %initialize collision boolean to false
+    for j=1:N+1
+        if(i~=j)
+            %this is just a safegaurd to ensure agents dont collide
+            reldistance(:,j)=X(:,j)-X(:,i);
+            relmag(1,j)=norm(reldistance(:,j));
+            if(relmag(1,j)<mindistance)
+                collision=1;   %indicates agents are too close
+                DX(:,i)=DX(:,i)-reldistance(:,j)/relmag(1,j);
             end
         end
+    end
+    if(collision==0)
+        Alpha = GetAlpha(N,di,i,X,Consensus);
+        R=rotation(N,t,Alpha);
+        DX(:,i)=DX(:,i) + R*3*((start(:,i)-X(:,i)));  %/(sqrt((start(1,i)-X(1,i))^2 + (start(2,i)-X(2,i))^2)); 
+    end
+end    
+if abs(norm(X(:,1:N)-start))<BlockSize
+   Consensus = 0; 
+end
+%-----------------end of new code------------------------------------------
         
         for k=1:N;
             X(:,k)=X(:,k)+(dt).*DX(:,k); %Why 0.1? Why not dt?
@@ -163,7 +203,7 @@ while (t<Tf)&&(Consensus==0);
 %     end
     
     for i=1:(N-1)
-        Alpha = GetAlpha(N,di,i,X);
+        Alpha = GetAlpha(N,di,i,X,Consensus);
         R=rotation(N,t,Alpha);
         DX(:,i)=R*((X(:,i+1)-X(:,i)));
     end;
@@ -171,7 +211,7 @@ while (t<Tf)&&(Consensus==0);
     %Agent N: Rotation and Dx
     %Separated because wrapping around from agent N back to agent 1
     
-        Alpha = GetAlpha(N,di,N,X);
+        Alpha = GetAlpha(N,di,N,X,Consensus);
         R=rotation(N,t,Alpha);
         DX(:,N)=R*((X(:,1)-X(:,N))); 
     
